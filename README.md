@@ -98,21 +98,6 @@ Final ranking based on:
 
 ---
 
-## 📸 Screenshots
-
-### 🔹 Main UI
-
-(Add screenshot here)
-
-### 🔹 Ranking Output
-
-(Add screenshot here)
-
-### 🔹 AI Chat Interaction
-
-(Add screenshot here)
-
----
 
 ## ⚙️ How to Run
 
