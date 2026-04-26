@@ -1,27 +1,28 @@
 def build_jd_prompt(jd_text):
-    """
-    Builds a structured prompt for extracting job details from a JD.
-    """
+    return f"""
+Extract information from the job description and return JSON.
 
-    prompt = f"""
-You are an expert recruiter assistant.
+Example:
 
-Your task is to extract structured information from the given Job Description.
+Job Description:
+We are hiring a Software Engineer with 2 years experience.
+Skills: Python, Java.
+Location: Hyderabad.
+Nice to have: AWS.
 
-Extract the following fields:
-- role (string)
-- skills_required (list of skills)
-- experience_required (string)
-- location (string, if available)
-- nice_to_have_skills (list, if available)
+Output:
+{{
+  "role": "Software Engineer",
+  "skills_required": ["Python", "Java"],
+  "experience_required": "2 years",
+  "location": "Hyderabad",
+  "nice_to_have_skills": ["AWS"]
+}}
 
-Rules:
-- Return ONLY valid JSON
-- Do NOT include explanations or extra text
-- If a field is missing, return empty string "" or empty list []
+Now extract from this:
 
 Job Description:
 {jd_text}
-"""
 
-    return prompt
+Output:
+"""
