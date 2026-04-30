@@ -641,8 +641,11 @@ const chatBox = {
   padding: "22px",
   width: "430px",
   maxWidth: "100%",
+  maxHeight: "85vh",
   borderRadius: "16px",
-  boxShadow: "0 30px 80px rgba(0,0,0,0.28)"
+  boxShadow: "0 30px 80px rgba(0,0,0,0.28)",
+  display: "flex",
+  flexDirection: "column"
 };
 
 const chatHeader = {
@@ -671,7 +674,10 @@ const chatMessages = {
   display: "flex",
   flexDirection: "column",
   gap: "10px",
-  marginBottom: "18px"
+  marginBottom: "18px",
+  overflowY: "auto",
+  maxHeight: "52vh",
+  paddingRight: "6px"
 };
 
 const aiMessage = {
