@@ -4,7 +4,6 @@ function App() {
   const [jdFile, setJdFile] = useState(null);
   const [jdText, setJdText] = useState("");
 
-  // 🔥 keep structure but add answers storage
   const [resumeInputs, setResumeInputs] = useState([
     { file: null, answers: {} }
   ]);
@@ -12,7 +11,6 @@ function App() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔥 CHAT STATES
   const [activeChat, setActiveChat] = useState(null);
   const [chatStep, setChatStep] = useState(-1);
   const [chatHistory, setChatHistory] = useState([]);
@@ -44,9 +42,7 @@ function App() {
     setResumeInputs(updated);
   };
 
-  // 🔥 START CHAT (NO BLOCKING, NO UI CHANGE)
   const startChat = (index) => {
-    // use backend name if available else fallback
     const name = results?.[index]?.name || "Candidate";
 
     setActiveChat(index);
@@ -60,11 +56,9 @@ function App() {
     ]);
   };
 
-  // 🔥 HANDLE ANSWERS
   const handleAnswer = (answer) => {
     let history = [...chatHistory, { sender: "user", text: answer }];
 
-    // first question (ready?)
     if (chatStep === -1) {
       if (answer === "No") {
         setActiveChat(null);
@@ -79,7 +73,6 @@ function App() {
 
     const next = chatStep + 1;
 
-    // store answer per candidate
     const updated = [...resumeInputs];
     updated[activeChat].answers[chatStep] = answer;
     setResumeInputs(updated);
@@ -94,7 +87,6 @@ function App() {
     setChatHistory(history);
   };
 
-  // 🔥 INTEREST SCORE
   const calculateInterest = (answers) => {
     let score = 0;
 
@@ -132,7 +124,6 @@ function App() {
 
       const data = await response.json();
 
-      // inject interest score (WITHOUT breaking UI)
       const updatedResults = data.ranked_candidates.map((c, i) => {
         const interest = calculateInterest(resumeInputs[i]?.answers || {});
 
@@ -153,190 +144,458 @@ function App() {
   };
 
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", background: "#f3f2ef", minHeight: "100vh" }}>
-
-      {/* HEADER */}
-        <div style={{
-          background: "linear-gradient(90deg, #0a66c2, #004182)",
-          color: "#fff",
-          padding: "18px 30px",
-          borderBottom: "1px solid #ddd",
-          fontSize: "22px",
-          fontWeight: "600",
-          letterSpacing: "0.5px"
-        }}>
-          🚀 AI Talent Scouting System
+    <div style={pageStyle}>
+      <header style={headerStyle}>
+        <div>
+          <div style={eyebrow}>AI Recruitment Intelligence</div>
+          <h1 style={title}>Talent Scouting System</h1>
         </div>
-      <div style={{ maxWidth: "900px", margin: "30px auto" }}>
+        <div style={headerBadge}>Candidate Ranking</div>
+      </header>
 
-        {/* JD */}
-        <div style={cardStyle}>
-          <h2 style={sectionTitle}>📄 Job Description</h2>
-          <input type="file" onChange={(e) => setJdFile(e.target.files[0])} />
-          <textarea rows="5" style={textareaStyle} value={jdText} onChange={(e) => setJdText(e.target.value)} />
-        </div>
-
-        {/* RESUMES */}
-        <div style={cardStyle}>
-          <h2 style={sectionTitle}>📂 Resumes</h2>
-
-          {resumeInputs.map((r, index) => (
-            <div key={index} style={{ marginBottom: "10px" }}>
-              <input type="file" onChange={(e) => handleResumeChange(index, e.target.files[0])} />
-
-              {r.file && (
-                <button onClick={() => startChat(index)} style={{ marginLeft: "10px" }}>
-                  💬 Answer AI Questions
-                </button>
-              )}
-
-              {resumeInputs.length > 1 && (
-                <button onClick={() => removeResumeInput(index)} style={removeBtn}>
-                  Remove
-                </button>
-              )}
+      <main style={mainStyle}>
+        <section style={gridStyle}>
+          <div style={cardStyle}>
+            <div style={sectionHeader}>
+              <div>
+                <h2 style={sectionTitle}>Job Description</h2>
+                <p style={sectionText}>Upload a JD file or paste the role details manually.</p>
+              </div>
+              <span style={stepBadge}>01</span>
             </div>
-          ))}
 
-          <button style={secondaryBtn} onClick={addResumeInput}>
-            ➕ Add Another Resume
+            <label style={fieldLabel}>JD File</label>
+            <input
+              type="file"
+              onChange={(e) => setJdFile(e.target.files[0])}
+              style={fileInputStyle}
+            />
+
+            <label style={fieldLabel}>Job Description Text</label>
+            <textarea
+              rows="6"
+              placeholder="Paste the job description here..."
+              style={textareaStyle}
+              value={jdText}
+              onChange={(e) => setJdText(e.target.value)}
+            />
+          </div>
+
+          <div style={cardStyle}>
+            <div style={sectionHeader}>
+              <div>
+                <h2 style={sectionTitle}>Candidate Resumes</h2>
+                <p style={sectionText}>Add resumes and collect candidate responses.</p>
+              </div>
+              <span style={stepBadge}>02</span>
+            </div>
+
+            {resumeInputs.map((r, index) => (
+              <div key={index} style={resumeRow}>
+                <div style={{ flex: 1 }}>
+                  <label style={fieldLabel}>Resume {index + 1}</label>
+                  <input
+                    type="file"
+                    onChange={(e) => handleResumeChange(index, e.target.files[0])}
+                    style={fileInputStyle}
+                  />
+                </div>
+
+                <div style={resumeActions}>
+                  {r.file && (
+                    <button onClick={() => startChat(index)} style={ghostBtn}>
+                      Answer Questions
+                    </button>
+                  )}
+
+                  {resumeInputs.length > 1 && (
+                    <button onClick={() => removeResumeInput(index)} style={removeBtn}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <button style={secondaryBtn} onClick={addResumeInput}>
+              Add Another Resume
+            </button>
+          </div>
+        </section>
+
+        <div style={submitWrap}>
+          <button style={loading ? disabledBtn : primaryBtn} onClick={handleSubmit} disabled={loading}>
+            {loading ? "Processing Candidates..." : "Upload & Rank Candidates"}
           </button>
         </div>
 
-        {/* BUTTON */}
-        <div style={{ textAlign: "center" }}>
-          <button style={primaryBtn} onClick={handleSubmit} disabled={loading}>
-            {loading ? "Processing..." : "🚀 Upload & Rank"}
-          </button>
-        </div>
-
-        {/* RESULTS (UNCHANGED STRUCTURE) */}
         {results && (
-          <div style={{ marginTop: "30px" }}>
-            <h2 style={{ marginBottom: "15px" }}>🏆 Ranked Candidates</h2>
+          <section style={resultsSection}>
+            <div style={resultsHeader}>
+              <div>
+                <h2 style={resultsTitle}>Ranked Candidates</h2>
+                <p style={sectionText}>Sorted by match quality, interest, and final score.</p>
+              </div>
+            </div>
 
             {results.map((c, i) => (
               <div key={i} style={resultCard}>
-                <h3>{i + 1}. {c.name}</h3>
+                <div style={candidateTop}>
+                  <div>
+                    <div style={rankBadge}>Rank #{i + 1}</div>
+                    <h3 style={candidateName}>{c.name}</h3>
+                  </div>
+                  <div style={finalScoreBox}>
+                    <span style={scoreLabel}>Final Score</span>
+                    <strong style={scoreValue}>{c.final_score}%</strong>
+                  </div>
+                </div>
 
-                <p><b>Match Score:</b> {c.match_score}%</p>
-                <p><b>Interest Score:</b> {c.interest_score}%</p>
-                <p><b>Final Score:</b> {c.final_score}%</p>
+                <div style={scoreGrid}>
+                  <div style={scoreItem}>
+                    <span>Match Score</span>
+                    <strong>{c.match_score}%</strong>
+                  </div>
+                  <div style={scoreItem}>
+                    <span>Interest Score</span>
+                    <strong>{c.interest_score}%</strong>
+                  </div>
+                  <div style={scoreItem}>
+                    <span>Decision</span>
+                    <strong>{c.decision}</strong>
+                  </div>
+                </div>
 
-                <p><b>Decision:</b> {c.decision}</p>
-
-                <p><b>Matched Skills:</b></p>
+                <p style={skillTitle}>Matched Skills</p>
                 <div style={tagContainer}>
                   {c.matched_skills.map((s, idx) => (
                     <span key={idx} style={greenTag}>{s}</span>
                   ))}
                 </div>
 
-                <p><b>Missing Skills:</b></p>
+                <p style={skillTitle}>Missing Skills</p>
                 <div style={tagContainer}>
                   {c.missing_skills.map((s, idx) => (
                     <span key={idx} style={redTag}>{s}</span>
                   ))}
                 </div>
-
-                </div>
+              </div>
             ))}
-          </div>
+          </section>
         )}
+      </main>
 
-      </div>
-
-      {/* CHAT MODAL */}
       {activeChat !== null && (
         <div style={modalStyle}>
           <div style={chatBox}>
-            {chatHistory.map((msg, i) => (
-              <p key={i}><b>{msg.sender === "ai" ? "AI" : "You"}:</b> {msg.text}</p>
-            ))}
+            <div style={chatHeader}>
+              <h3 style={chatTitle}>AI Screening Questions</h3>
+              <span style={chatPill}>Live</span>
+            </div>
 
-            {(chatStep === -1 ? ["Yes","No"] : options[chatStep])?.map((opt, i) => (
-              <button key={i} onClick={() => handleAnswer(opt)}>
-                {opt}
-              </button>
-            ))}
+            <div style={chatMessages}>
+              {chatHistory.map((msg, i) => (
+                <div
+                  key={i}
+                  style={msg.sender === "ai" ? aiMessage : userMessage}
+                >
+                  <strong>{msg.sender === "ai" ? "AI" : "You"}</strong>
+                  <p>{msg.text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div style={chatActions}>
+              {(chatStep === -1 ? ["Yes", "No"] : options[chatStep])?.map((opt, i) => (
+                <button key={i} onClick={() => handleAnswer(opt)} style={chatBtn}>
+                  {opt}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }
 
-// STYLES (UNCHANGED)
+const pageStyle = {
+  fontFamily: "Inter, Arial, sans-serif",
+  background: "linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%)",
+  minHeight: "100vh",
+  color: "#172033"
+};
+
+const headerStyle = {
+  background: "linear-gradient(135deg, #071629 0%, #123a63 58%, #0f766e 100%)",
+  color: "#fff",
+  padding: "34px 48px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  boxShadow: "0 20px 50px rgba(7, 22, 41, 0.24)"
+};
+
+const eyebrow = {
+  fontSize: "12px",
+  textTransform: "uppercase",
+  letterSpacing: "1.8px",
+  color: "#9dd8d2",
+  fontWeight: 700,
+  marginBottom: "8px"
+};
+
+const title = {
+  margin: 0,
+  fontSize: "32px",
+  fontWeight: 800
+};
+
+const headerBadge = {
+  background: "rgba(255,255,255,0.12)",
+  border: "1px solid rgba(255,255,255,0.22)",
+  padding: "10px 16px",
+  borderRadius: "999px",
+  fontSize: "13px",
+  fontWeight: 700
+};
+
+const mainStyle = {
+  maxWidth: "1120px",
+  margin: "34px auto",
+  padding: "0 22px"
+};
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+  gap: "24px"
+};
+
 const cardStyle = {
-  background: "rgba(255,255,255,0.9)",
-  backdropFilter: "blur(10px)",
-  padding: "24px",
-  borderRadius: "16px",
-  boxShadow: "0 8px 25px rgba(0,0,0,0.08)",
-  marginBottom: "24px",
-  border: "1px solid rgba(255,255,255,0.3)"
+  background: "rgba(255,255,255,0.92)",
+  padding: "26px",
+  borderRadius: "14px",
+  boxShadow: "0 18px 45px rgba(23, 32, 51, 0.08)",
+  border: "1px solid rgba(216, 226, 239, 0.9)"
+};
+
+const sectionHeader = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "18px",
+  marginBottom: "22px"
 };
 
 const sectionTitle = {
-  marginBottom: "18px",
-  color: "#0a66c2",
-  fontSize: "20px",
-  fontWeight: "600"
+  margin: 0,
+  color: "#172033",
+  fontSize: "21px",
+  fontWeight: 800
+};
+
+const sectionText = {
+  margin: "6px 0 0",
+  color: "#64748b",
+  fontSize: "14px",
+  lineHeight: 1.5
+};
+
+const stepBadge = {
+  width: "38px",
+  height: "38px",
+  borderRadius: "12px",
+  background: "#ecfeff",
+  color: "#0f766e",
+  display: "grid",
+  placeItems: "center",
+  fontWeight: 800
+};
+
+const fieldLabel = {
+  display: "block",
+  fontSize: "13px",
+  fontWeight: 700,
+  color: "#334155",
+  marginBottom: "8px",
+  marginTop: "14px"
+};
+
+const fileInputStyle = {
+  width: "100%",
+  padding: "11px",
+  borderRadius: "10px",
+  border: "1px solid #d8e2ef",
+  background: "#f8fafc",
+  color: "#334155"
 };
 
 const textareaStyle = {
   width: "100%",
-  padding: "12px",
-  borderRadius: "10px",
-  border: "1px solid #dcdcdc",
+  boxSizing: "border-box",
+  padding: "14px",
+  borderRadius: "12px",
+  border: "1px solid #d8e2ef",
   outline: "none",
-  fontSize: "14px"
+  fontSize: "14px",
+  resize: "vertical",
+  background: "#fbfdff",
+  color: "#172033",
+  lineHeight: 1.6
+};
+
+const resumeRow = {
+  padding: "16px",
+  border: "1px solid #e2e8f0",
+  borderRadius: "12px",
+  marginBottom: "14px",
+  background: "#fbfdff"
+};
+
+const resumeActions = {
+  display: "flex",
+  gap: "10px",
+  marginTop: "12px",
+  flexWrap: "wrap"
+};
+
+const submitWrap = {
+  textAlign: "center",
+  margin: "30px 0 36px"
 };
 
 const primaryBtn = {
-  background: "linear-gradient(135deg, #0a66c2, #004182)",
+  background: "linear-gradient(135deg, #0f766e, #123a63)",
   color: "#fff",
-  padding: "12px 30px",
+  padding: "14px 32px",
   border: "none",
-  borderRadius: "30px",
+  borderRadius: "12px",
   fontSize: "15px",
-  fontWeight: "600",
+  fontWeight: 800,
   cursor: "pointer",
-  boxShadow: "0 6px 15px rgba(10,102,194,0.3)",
-  transition: "all 0.2s ease"
+  boxShadow: "0 14px 30px rgba(15, 118, 110, 0.28)"
+};
+
+const disabledBtn = {
+  ...primaryBtn,
+  opacity: 0.7,
+  cursor: "not-allowed"
 };
 
 const secondaryBtn = {
-  background: "#eef3f8",
-  color: "#0a66c2",
-  padding: "8px 18px",
+  background: "#172033",
+  color: "#fff",
+  padding: "11px 18px",
   border: "none",
-  borderRadius: "25px",
+  borderRadius: "10px",
   cursor: "pointer",
-  fontWeight: "500",
-  marginTop: "10px"
+  fontWeight: 800,
+  marginTop: "8px"
+};
+
+const ghostBtn = {
+  background: "#ecfeff",
+  color: "#0f766e",
+  border: "1px solid #b6ece8",
+  padding: "9px 13px",
+  borderRadius: "9px",
+  cursor: "pointer",
+  fontWeight: 800
 };
 
 const removeBtn = {
-  marginLeft: "10px",
-  background: "#ff4d4f",
-  color: "#fff",
-  border: "none",
-  padding: "6px 12px",
-  borderRadius: "8px",
+  background: "#fff1f2",
+  color: "#be123c",
+  border: "1px solid #fecdd3",
+  padding: "9px 13px",
+  borderRadius: "9px",
   cursor: "pointer",
-  fontWeight: "500"
+  fontWeight: 800
+};
+
+const resultsSection = {
+  marginTop: "20px"
+};
+
+const resultsHeader = {
+  marginBottom: "18px"
+};
+
+const resultsTitle = {
+  margin: 0,
+  fontSize: "26px",
+  color: "#172033"
 };
 
 const resultCard = {
   background: "#ffffff",
-  padding: "18px",
+  padding: "22px",
   borderRadius: "14px",
-  marginBottom: "16px",
-  boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-  borderLeft: "6px solid #0a66c2",
-  transition: "transform 0.2s ease"
+  marginBottom: "18px",
+  boxShadow: "0 16px 42px rgba(23, 32, 51, 0.08)",
+  border: "1px solid #e2e8f0"
+};
+
+const candidateTop = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "18px",
+  alignItems: "flex-start",
+  marginBottom: "18px"
+};
+
+const rankBadge = {
+  color: "#0f766e",
+  fontWeight: 800,
+  fontSize: "13px",
+  marginBottom: "6px"
+};
+
+const candidateName = {
+  margin: 0,
+  fontSize: "22px",
+  color: "#172033"
+};
+
+const finalScoreBox = {
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: "12px",
+  padding: "12px 16px",
+  textAlign: "right",
+  minWidth: "130px"
+};
+
+const scoreLabel = {
+  display: "block",
+  fontSize: "12px",
+  color: "#64748b",
+  fontWeight: 700
+};
+
+const scoreValue = {
+  fontSize: "24px",
+  color: "#0f766e"
+};
+
+const scoreGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+  gap: "12px",
+  marginBottom: "18px"
+};
+
+const scoreItem = {
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: "12px",
+  padding: "13px"
+};
+
+const skillTitle = {
+  margin: "14px 0 8px",
+  fontWeight: 800,
+  color: "#334155"
 };
 
 const tagContainer = {
@@ -347,49 +606,106 @@ const tagContainer = {
 };
 
 const greenTag = {
-  background: "linear-gradient(135deg, #d4f4dd, #b7ebc6)",
-  color: "#1b5e20",
-  padding: "6px 12px",
-  borderRadius: "20px",
+  background: "#ecfdf5",
+  color: "#047857",
+  padding: "7px 11px",
+  borderRadius: "999px",
   fontSize: "12px",
-  fontWeight: "600"
+  fontWeight: 800,
+  border: "1px solid #bbf7d0"
 };
 
 const redTag = {
-  background: "linear-gradient(135deg, #fdecea, #f8c7c7)",
-  color: "#b71c1c",
-  padding: "6px 12px",
-  borderRadius: "20px",
+  background: "#fff1f2",
+  color: "#be123c",
+  padding: "7px 11px",
+  borderRadius: "999px",
   fontSize: "12px",
-  fontWeight: "600"
-};
-
-const conversationBox = {
-  background: "#f4f6f8",
-  padding: "12px",
-  borderRadius: "10px",
-  border: "1px solid #e0e0e0"
+  fontWeight: 800,
+  border: "1px solid #fecdd3"
 };
 
 const modalStyle = {
   position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  background: "rgba(0,0,0,0.6)",
+  inset: 0,
+  background: "rgba(15, 23, 42, 0.68)",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  backdropFilter: "blur(4px)"
+  backdropFilter: "blur(8px)",
+  padding: "20px"
 };
 
 const chatBox = {
   background: "#ffffff",
   padding: "22px",
-  width: "400px",
+  width: "430px",
+  maxWidth: "100%",
   borderRadius: "16px",
-  boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+  boxShadow: "0 30px 80px rgba(0,0,0,0.28)"
+};
+
+const chatHeader = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "16px"
+};
+
+const chatTitle = {
+  margin: 0,
+  fontSize: "20px",
+  color: "#172033"
+};
+
+const chatPill = {
+  background: "#ecfdf5",
+  color: "#047857",
+  padding: "5px 10px",
+  borderRadius: "999px",
+  fontSize: "12px",
+  fontWeight: 800
+};
+
+const chatMessages = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  marginBottom: "18px"
+};
+
+const aiMessage = {
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: "12px",
+  padding: "11px 13px",
+  color: "#334155"
+};
+
+const userMessage = {
+  background: "#ecfeff",
+  border: "1px solid #b6ece8",
+  borderRadius: "12px",
+  padding: "11px 13px",
+  color: "#0f766e"
+};
+
+const chatActions = {
+  display: "flex",
+  gap: "10px",
+  flexWrap: "wrap"
+};
+
+const chatBtn = {
+  flex: 1,
+  minWidth: "110px",
+  background: "#172033",
+  color: "#fff",
+  border: "none",
+  borderRadius: "10px",
+  padding: "11px 14px",
+  cursor: "pointer",
+  fontWeight: 800
 };
 
 export default App;
