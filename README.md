@@ -23,7 +23,7 @@ This system:
 1. 📄 Parses Job Descriptions (JD)
 2. 📂 Extracts data from resumes (PDF, TXT, CSV, Excel, DOCX)
 3. 🧠 Matches candidates using skill-based scoring
-4. 💬 Simulates AI-driven candidate interaction
+4. 💬 Runs AI-driven candidate interaction through local Ollama
 5. 🏆 Produces a ranked shortlist based on:
 
    * Match Score
@@ -62,10 +62,10 @@ This system:
   * Missing Skills
   * Decision (Strong / Moderate / Low)
 
-### ✅ Interest Score Engine (AI Chat Simulation)
+### ✅ Interest Score Engine (Ollama JARVIS Chat)
 
-* Interactive chat UI per candidate
-* Asks:
+* Real local LLM chat UI per candidate using Ollama
+* JARVIS asks:
 
   * Interest in role
   * Experience confidence
@@ -87,7 +87,7 @@ Final ranking based on:
 
 * Python
 * FastAPI
-* LLM Integration
+* Ollama local LLM integration
 * pdfplumber
 * pandas
 
@@ -122,6 +122,25 @@ uvicorn main:app --reload
 
 ---
 
+### 2.1 Ollama Setup
+
+Install Ollama, then pull a free local model:
+
+```bash
+ollama pull llama3.2
+ollama serve
+```
+
+By default the backend calls:
+
+```bash
+http://127.0.0.1:11434/api/chat
+```
+
+You can change the model with the `OLLAMA_MODEL` environment variable.
+
+---
+
 ### 3. Frontend Setup
 
 ```bash
@@ -144,7 +163,6 @@ http://localhost:3000
 
 * Real candidate sourcing (LinkedIn API / scraping)
 * Email / WhatsApp automated outreach
-* Real LLM conversational agent (not simulated)
 * Resume semantic matching (embeddings)
 * Database integration
 

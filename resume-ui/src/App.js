@@ -1,717 +1,978 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import "./App.css";
 
-function App() {
-  const [jdFile, setJdFile] = useState(null);
-  const [jdText, setJdText] = useState("");
+const jobs = [
+  {
+    id: "full-stack-developer",
+    title: "Full Stack Developer",
+    team: "Product Engineering",
+    location: "Bengaluru / Remote",
+    type: "Full-time",
+    level: "Mid-Senior",
+    salary: "18-30 LPA",
+    summary:
+      "Build customer-facing SaaS workflows across React, Node.js, APIs, and cloud services.",
+    skills: ["React", "Node.js", "TypeScript", "PostgreSQL", "REST APIs", "AWS"],
+    nice: ["GraphQL", "Docker", "CI/CD"],
+    description:
+      "You will own features from architecture to release, collaborate with product teams, design clean APIs, and keep the user experience fast, accessible, and reliable.",
+  },
+  {
+    id: "backend-developer",
+    title: "Backend Developer",
+    team: "Core Platform",
+    location: "Hyderabad",
+    type: "Full-time",
+    level: "Mid",
+    salary: "16-26 LPA",
+    summary:
+      "Design resilient services, event pipelines, and data models for high-volume systems.",
+    skills: ["Node.js", "Python", "Microservices", "PostgreSQL", "Redis", "Kafka"],
+    nice: ["Kubernetes", "gRPC", "System Design"],
+    description:
+      "You will build scalable backend services, improve observability, review architecture decisions, and partner with frontend and data teams.",
+  },
+  {
+    id: "frontend-developer",
+    title: "Front-End Developer",
+    team: "Experience Design",
+    location: "Pune / Remote",
+    type: "Full-time",
+    level: "Mid",
+    salary: "14-24 LPA",
+    summary:
+      "Create polished interfaces with React, design systems, performance tuning, and thoughtful interaction states.",
+    skills: ["React", "JavaScript", "CSS", "TypeScript", "Accessibility", "Redux"],
+    nice: ["Figma", "Testing Library", "Animation"],
+    description:
+      "You will translate product flows into production UI, build reusable components, and keep pages crisp across desktop and mobile.",
+  },
+  {
+    id: "cloud-engineer",
+    title: "Cloud Engineer",
+    team: "Infrastructure",
+    location: "Chennai",
+    type: "Full-time",
+    level: "Senior",
+    salary: "20-34 LPA",
+    summary:
+      "Operate secure AWS infrastructure with Terraform, Kubernetes, networking, and deployment automation.",
+    skills: ["AWS", "Terraform", "Kubernetes", "Docker", "Linux", "CI/CD"],
+    nice: ["Azure", "Security", "Cost Optimization"],
+    description:
+      "You will provision cloud systems, automate releases, harden environments, and help engineering teams ship safely.",
+  },
+  {
+    id: "prompt-engineer",
+    title: "Prompt Engineer",
+    team: "Applied AI",
+    location: "Remote",
+    type: "Full-time",
+    level: "Mid-Senior",
+    salary: "18-32 LPA",
+    summary:
+      "Design, evaluate, and improve LLM workflows for enterprise assistants and AI agents.",
+    skills: ["Prompt Engineering", "LLMs", "Python", "RAG", "Evaluation", "OpenAI API"],
+    nice: ["LangChain", "Vector Databases", "Agent Design"],
+    description:
+      "You will craft prompts, create evaluation sets, tune retrieval workflows, and partner with product teams to turn ambiguous tasks into dependable AI experiences.",
+  },
+  {
+    id: "machine-learning-engineer",
+    title: "Machine Learning Engineer",
+    team: "Data Science",
+    location: "Bengaluru",
+    type: "Full-time",
+    level: "Senior",
+    salary: "24-42 LPA",
+    summary:
+      "Productionize ML models with Python, feature pipelines, model monitoring, and robust experimentation.",
+    skills: ["Python", "Machine Learning", "TensorFlow", "PyTorch", "MLOps", "SQL"],
+    nice: ["Airflow", "Databricks", "Model Monitoring"],
+    description:
+      "You will build training pipelines, deploy models, monitor quality drift, and make ML systems easier for teams to trust.",
+  },
+  {
+    id: "data-engineer",
+    title: "Data Engineer",
+    team: "Analytics Platform",
+    location: "Gurugram",
+    type: "Full-time",
+    level: "Mid",
+    salary: "15-27 LPA",
+    summary:
+      "Own lakehouse pipelines, warehouse models, and reliable data products for business teams.",
+    skills: ["SQL", "Python", "Spark", "Airflow", "ETL", "Data Modeling"],
+    nice: ["Snowflake", "dbt", "Kafka"],
+    description:
+      "You will design batch and streaming pipelines, improve data quality, and build datasets that power dashboards and AI features.",
+  },
+  {
+    id: "data-analyst",
+    title: "Data Analyst",
+    team: "Business Intelligence",
+    location: "Bengaluru / Hybrid",
+    type: "Full-time",
+    level: "Mid",
+    salary: "10-18 LPA",
+    summary:
+      "Turn product, sales, and operational data into clear insights, dashboards, and decision-ready analysis.",
+    skills: ["SQL", "Excel", "Power BI", "Python", "Data Visualization", "Statistics"],
+    nice: ["Tableau", "A/B Testing", "Business Intelligence"],
+    description:
+      "You will build dashboards, analyze trends, define metrics, prepare stakeholder reports, and help teams make confident data-backed decisions.",
+  },
+  {
+    id: "devops-engineer",
+    title: "DevOps Engineer",
+    team: "Developer Platform",
+    location: "Noida / Hybrid",
+    type: "Full-time",
+    level: "Mid-Senior",
+    salary: "17-30 LPA",
+    summary:
+      "Improve build pipelines, release automation, observability, and incident response practices.",
+    skills: ["CI/CD", "Docker", "Kubernetes", "Jenkins", "AWS", "Monitoring"],
+    nice: ["Terraform", "SRE", "GitOps"],
+    description:
+      "You will streamline delivery workflows, maintain runtime platforms, and partner with teams on uptime and reliability goals.",
+  },
+  {
+    id: "cybersecurity-analyst",
+    title: "Cybersecurity Analyst",
+    team: "Security Operations",
+    location: "Mumbai",
+    type: "Full-time",
+    level: "Mid",
+    salary: "13-23 LPA",
+    summary:
+      "Monitor threats, investigate alerts, improve controls, and guide secure engineering decisions.",
+    skills: ["SIEM", "Incident Response", "Network Security", "Vulnerability Assessment", "Linux", "Cloud Security"],
+    nice: ["SOC", "Forensics", "ISO 27001"],
+    description:
+      "You will analyze security events, document incidents, coordinate remediation, and improve detection coverage.",
+  },
+  {
+    id: "qa-automation-engineer",
+    title: "QA Automation Engineer",
+    team: "Quality Engineering",
+    location: "Remote",
+    type: "Full-time",
+    level: "Mid",
+    salary: "12-22 LPA",
+    summary:
+      "Create dependable automated tests for web apps, APIs, releases, and regression suites.",
+    skills: ["Selenium", "Playwright", "JavaScript", "API Testing", "Jest", "CI/CD"],
+    nice: ["Performance Testing", "Cypress", "Test Strategy"],
+    description:
+      "You will build automation coverage, prevent regressions, and improve release confidence with practical test design.",
+  },
+  {
+    id: "mobile-app-developer",
+    title: "Mobile App Developer",
+    team: "Mobile Experience",
+    location: "Bengaluru / Hybrid",
+    type: "Full-time",
+    level: "Mid",
+    salary: "15-28 LPA",
+    summary:
+      "Ship high-quality mobile experiences with React Native, API integration, and performance care.",
+    skills: ["React Native", "JavaScript", "TypeScript", "REST APIs", "Android", "iOS"],
+    nice: ["Expo", "Firebase", "Mobile Analytics"],
+    description:
+      "You will build mobile features, integrate native capabilities, profile performance, and collaborate with design and backend teams.",
+  },
+  {
+    id: "ui-ux-designer",
+    title: "UI/UX Designer",
+    team: "Design Studio",
+    location: "Pune",
+    type: "Full-time",
+    level: "Mid-Senior",
+    salary: "14-26 LPA",
+    summary:
+      "Design thoughtful enterprise workflows using research, systems thinking, and polished visual craft.",
+    skills: ["Figma", "User Research", "Design Systems", "Prototyping", "Interaction Design", "Usability Testing"],
+    nice: ["Analytics", "Accessibility", "Product Strategy"],
+    description:
+      "You will map journeys, prototype workflows, run usability reviews, and raise the quality of production experiences.",
+  },
+  {
+    id: "database-administrator",
+    title: "Database Administrator",
+    team: "Data Reliability",
+    location: "Hyderabad",
+    type: "Full-time",
+    level: "Senior",
+    salary: "18-31 LPA",
+    summary:
+      "Keep relational databases secure, performant, backed up, and ready for growth.",
+    skills: ["PostgreSQL", "MySQL", "Performance Tuning", "Backup Recovery", "SQL", "Linux"],
+    nice: ["Replication", "Cloud Databases", "Automation"],
+    description:
+      "You will tune queries, manage backups, plan capacity, and partner with engineering on schema and reliability decisions.",
+  },
+  {
+    id: "ai-product-manager",
+    title: "AI Product Manager",
+    team: "AI Products",
+    location: "Gurugram / Remote",
+    type: "Full-time",
+    level: "Senior",
+    salary: "26-45 LPA",
+    summary:
+      "Lead AI products from discovery to launch, balancing user value, model quality, and business outcomes.",
+    skills: ["Product Strategy", "AI", "Analytics", "Roadmapping", "User Research", "Experimentation"],
+    nice: ["LLMs", "RAG", "Enterprise SaaS"],
+    description:
+      "You will define AI workflows, prioritize releases, track adoption, and align design, engineering, and stakeholders.",
+  },
+  {
+    id: "solutions-architect",
+    title: "Solutions Architect",
+    team: "Customer Engineering",
+    location: "Mumbai / Remote",
+    type: "Full-time",
+    level: "Senior",
+    salary: "28-48 LPA",
+    summary:
+      "Design technical solutions for enterprise customers across cloud, integrations, APIs, and AI capabilities.",
+    skills: ["System Design", "Cloud Architecture", "APIs", "Security", "Stakeholder Management", "AWS"],
+    nice: ["Pre-Sales", "Kubernetes", "Data Architecture"],
+    description:
+      "You will turn customer needs into technical plans, guide implementation teams, and present clear architecture tradeoffs.",
+  },
+  {
+    id: "genai-engineer",
+    title: "Generative AI Engineer",
+    team: "Innovation Lab",
+    location: "Remote",
+    type: "Full-time",
+    level: "Senior",
+    salary: "24-44 LPA",
+    summary:
+      "Build RAG apps, AI agents, model evaluations, and production-ready generative AI services.",
+    skills: ["Python", "LLMs", "RAG", "Vector Databases", "LangChain", "OpenAI API"],
+    nice: ["Fine-Tuning", "Guardrails", "Azure AI"],
+    description:
+      "You will build intelligent workflows, connect retrieval systems, evaluate model behavior, and bring AI prototypes into production.",
+  },
+];
 
-  const [resumeInputs, setResumeInputs] = useState([
-    { file: null, answers: {} }
-  ]);
+const screeningQuestions = [
+  {
+    key: "interest",
+    question: "Are you interested in this job?",
+  },
+  {
+    key: "skillFit",
+    question: "Do you feel your skills match this role?",
+  },
+  {
+    key: "availability",
+    question: "How quickly can you join the company?",
+  },
+];
 
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
+const knownSkills = [...new Set(jobs.flatMap((job) => [...job.skills, ...job.nice]))];
 
-  const [activeChat, setActiveChat] = useState(null);
-  const [chatStep, setChatStep] = useState(-1);
-  const [chatHistory, setChatHistory] = useState([]);
+function titleCaseName(name) {
+  return name
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
-  const questions = [
-    "Are you interested in this job opportunity?",
-    "Do you feel your experience matches this role?",
-    "What is your availability?"
-  ];
+function cleanNameCandidate(value) {
+  if (!value) return "";
+  return value
+    .replace(/name|candidate|applicant|resume|curriculum vitae|cv/gi, "")
+    .replace(/[:\-|•]/g, " ")
+    .replace(/[^a-zA-Z\s.'-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  const options = [
-    ["Yes", "No", "Maybe"],
-    ["Yes", "No", "Maybe"],
-    ["Immediate", "1-2 Weeks", "1+ Month"]
-  ];
+function looksLikePersonName(value) {
+  const words = cleanNameCandidate(value).split(/\s+/).filter(Boolean);
+  const blocked = /resume|curriculum|vitae|email|phone|mobile|linkedin|github|portfolio|address|experience|education|skills|objective|summary|developer|engineer/i;
+  return words.length >= 2 && words.length <= 4 && !blocked.test(value) && words.every((word) => /^[A-Za-z][A-Za-z.'-]{1,}$/.test(word));
+}
 
-  const handleResumeChange = (index, file) => {
-    const updated = [...resumeInputs];
-    updated[index].file = file;
-    setResumeInputs(updated);
-  };
+function inferNameFromResumeText(resumeText) {
+  if (!resumeText) return "";
+  const normalized = resumeText.replace(/\r/g, "\n");
+  const explicitName = normalized.match(/(?:^|\n)\s*(?:candidate\s+name|applicant\s+name|name)\s*[:-]\s*([A-Za-z][A-Za-z\s.'-]{2,60})/i);
 
-  const addResumeInput = () => {
-    setResumeInputs([...resumeInputs, { file: null, answers: {} }]);
-  };
+  if (explicitName && looksLikePersonName(explicitName[1])) {
+    return titleCaseName(cleanNameCandidate(explicitName[1]));
+  }
 
-  const removeResumeInput = (index) => {
-    const updated = resumeInputs.filter((_, i) => i !== index);
-    setResumeInputs(updated);
-  };
+  const lines = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  const nameLine = lines.find(looksLikePersonName);
 
-  const startChat = (index) => {
-    const name = results?.[index]?.name || "Candidate";
+  return nameLine ? titleCaseName(cleanNameCandidate(nameLine)) : "";
+}
 
-    setActiveChat(index);
-    setChatStep(-1);
+function extractSkillsFromText(resumeText, job) {
+  const lowerText = (resumeText || "").toLowerCase();
+  const profileSkills = knownSkills.filter((skill) => lowerText.includes(skill.toLowerCase()));
+  const jobMatchedSkills = job.skills.filter((skill) => lowerText.includes(skill.toLowerCase()));
+  return [...new Set([...profileSkills, ...jobMatchedSkills])];
+}
 
-    setChatHistory([
-      {
-        sender: "ai",
-        text: `Hi ${name}, are you ready to answer the questions?`
-      }
-    ]);
-  };
-
-  const handleAnswer = (answer) => {
-    let history = [...chatHistory, { sender: "user", text: answer }];
-
-    if (chatStep === -1) {
-      if (answer === "No") {
-        setActiveChat(null);
-        return;
-      }
-
-      history.push({ sender: "ai", text: questions[0] });
-      setChatStep(0);
-      setChatHistory(history);
+function readResumeTextInBrowser(file) {
+  return new Promise((resolve) => {
+    if (!file) {
+      resolve("");
       return;
     }
 
-    const next = chatStep + 1;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === "string") {
+        resolve(result);
+        return;
+      }
 
-    const updated = [...resumeInputs];
-    updated[activeChat].answers[chatStep] = answer;
-    setResumeInputs(updated);
+      const bytes = new Uint8Array(result || []);
+      const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+      resolve(
+        [...decoded]
+          .map((char) => {
+            const code = char.charCodeAt(0);
+            return code === 9 || code === 10 || code === 13 || (code >= 32 && code <= 126) ? char : " ";
+          })
+          .join("")
+      );
+    };
+    reader.onerror = () => resolve("");
 
-    if (next < questions.length) {
-      history.push({ sender: "ai", text: questions[next] });
-      setChatStep(next);
+    if (/\.(txt|csv)$/i.test(file.name)) {
+      reader.readAsText(file);
     } else {
-      setActiveChat(null);
+      reader.readAsArrayBuffer(file);
     }
+  });
+}
 
-    setChatHistory(history);
-  };
+async function parseResumeProfile(file) {
+  const formData = new FormData();
+  formData.append("resume_file", file);
 
-  const calculateInterest = (answers) => {
-    let score = 0;
-
-    if (answers[0] === "Yes") score += 40;
-    if (answers[0] === "Maybe") score += 20;
-
-    if (answers[1] === "Yes") score += 30;
-    if (answers[1] === "Maybe") score += 15;
-
-    if (answers[2] === "Immediate") score += 30;
-    if (answers[2] === "1-2 Weeks") score += 20;
-
-    return score;
-  };
-
-  const handleSubmit = async () => {
-    const formData = new FormData();
-
-    if (jdFile) formData.append("jd_file", jdFile);
-    else if (jdText) formData.append("jd_text", jdText);
-
-    resumeInputs.forEach((r) => {
-      if (r.file) formData.append("resume_files", r.file);
+  try {
+    const response = await fetch("http://127.0.0.1:8000/parse-resume-profile", {
+      method: "POST",
+      body: formData,
     });
 
-    try {
-      setLoading(true);
-
-      const response = await fetch("http://127.0.0.1:8000/upload-and-rank", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("API Error");
-
+    if (response.ok) {
       const data = await response.json();
-
-      const updatedResults = data.ranked_candidates.map((c, i) => {
-        const interest = calculateInterest(resumeInputs[i]?.answers || {});
-
+      if (!data.error) {
         return {
-          ...c,
-          interest_score: interest,
-          final_score: (c.match_score * 0.7 + interest * 0.3).toFixed(2)
+          name: data.name || "",
+          skills: data.skills || [],
+          experience: data.experience || "",
+          resumeText: data.resume_text || "",
         };
+      }
+    }
+  } catch {
+    // Local backend may not be running during UI-only demos.
+  }
+
+  const resumeText = await readResumeTextInBrowser(file);
+  return {
+    name: inferNameFromResumeText(resumeText),
+    skills: extractSkillsFromText(resumeText, jobs[0]),
+    experience: "",
+    resumeText,
+  };
+}
+
+async function callJarvisChat({ profile, job, messages, questionIndex }) {
+  let response;
+
+  try {
+    response = await fetch("http://127.0.0.1:8000/jarvis-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        candidate_name: profile.name,
+        candidate_skills: profile.skills,
+        candidate_experience: profile.experience,
+        job_title: job.title,
+        job_description: job.description,
+        required_skills: job.skills,
+        question_index: questionIndex,
+        messages: messages.map((message) => ({
+          role: message.sender,
+          content: message.text,
+        })),
+      }),
+    });
+  } catch {
+    throw new Error("Backend is not reachable. Start FastAPI with: uvicorn main:app --reload");
+  }
+
+  const data = await response.json();
+  if (!response.ok || data.error) {
+    throw new Error(data.error || "Unable to connect to JARVIS");
+  }
+
+  return data.reply;
+}
+
+function buildProfileFromResume(parsedResume, job) {
+  const name = inferNameFromResumeText(parsedResume.resumeText) || cleanNameCandidate(parsedResume.name) || "Candidate";
+  const nameScore = [...name].reduce((total, char) => total + char.charCodeAt(0), 0);
+  const extractedSkills = [
+    ...new Set([
+      ...extractSkillsFromText(parsedResume.resumeText, job),
+      ...(parsedResume.skills || []),
+    ]),
+  ];
+  const required = extractedSkills.length ? job.skills.filter((skill) => extractedSkills.includes(skill)) : job.skills.filter((_, index) => (index + nameScore) % 3 !== 0);
+  const bonus = job.nice.filter((_, index) => (index + nameScore) % 2 === 0);
+  const fallback = required.length ? required : job.skills.slice(0, 4);
+
+  return {
+    name: titleCaseName(cleanNameCandidate(name)) || "Candidate",
+    skills: [...new Set([...fallback, ...bonus, ...extractedSkills])],
+    experience: parsedResume.experience || `${3 + (nameScore % 5)} years`,
+    location: ["Bengaluru", "Hyderabad", "Pune", "Remote", "Chennai"][nameScore % 5],
+  };
+}
+
+function normalizeAnswer(text) {
+  return (text || "").trim().toLowerCase();
+}
+
+function deriveScreeningAnswers(messages = []) {
+  const candidateReplies = messages
+    .filter((message) => message.sender === "candidate")
+    .map((message) => message.text);
+  const interestText = normalizeAnswer(candidateReplies[0]);
+  const skillText = normalizeAnswer(candidateReplies[1]);
+  const availabilityText = normalizeAnswer(candidateReplies[2]);
+
+  let interest = "Maybe";
+  if (/\b(yes|interested|excited|definitely|sure|absolutely)\b/.test(interestText)) interest = "Yes";
+  if (/\b(no|not interested|not now|decline)\b/.test(interestText)) interest = "No";
+
+  let skillFit = "Partially";
+  if (/\b(yes|match|strong|confident|definitely|most|all)\b/.test(skillText)) skillFit = "Yes";
+  if (/\b(no|not match|don't|do not|lack|missing)\b/.test(skillText)) skillFit = "No";
+
+  let availability = "1+ Month";
+  if (/\b(immediate|immediately|now|today|tomorrow|asap)\b/.test(availabilityText)) availability = "Immediate";
+  if (/\b(1-2|one to two|two weeks|2 weeks|one week|1 week|15 days)\b/.test(availabilityText)) availability = "1-2 Weeks";
+
+  return [interest, skillFit, availability];
+}
+
+function calculateInterestScore(answers = []) {
+  let score = 0;
+  if (answers[0] === "Yes") score += 42;
+  if (answers[0] === "Maybe") score += 22;
+  if (answers[1] === "Yes") score += 34;
+  if (answers[1] === "Partially") score += 18;
+  if (answers[2] === "Immediate") score += 24;
+  if (answers[2] === "1-2 Weeks") score += 17;
+  if (answers[2] === "1+ Month") score += 8;
+  return Math.min(score, 100);
+}
+
+function createApplication(profile, job, answers, resumeName, seed = Date.now()) {
+  const matchedSkills = job.skills.filter((skill) => profile.skills.includes(skill));
+  const missingSkills = job.skills.filter((skill) => !profile.skills.includes(skill));
+  const niceMatches = job.nice.filter((skill) => profile.skills.includes(skill));
+  const matchScore = Math.min(
+    100,
+    Math.round((matchedSkills.length / job.skills.length) * 82 + (niceMatches.length / Math.max(job.nice.length, 1)) * 18)
+  );
+  const interestScore = calculateInterestScore(answers);
+  const combinedScore = Math.round(matchScore * 0.65 + interestScore * 0.35);
+
+  return {
+    id: `${job.id}-${profile.name.replace(/\s+/g, "-").toLowerCase()}-${seed}`,
+    jobId: job.id,
+    jobTitle: job.title,
+    candidateName: profile.name,
+    resumeName,
+    location: profile.location,
+    experience: profile.experience,
+    skills: profile.skills,
+    matchedSkills,
+    missingSkills,
+    answers,
+    matchScore,
+    interestScore,
+    combinedScore,
+    appliedAt: "Today",
+    explanation:
+      matchedSkills.length > 0
+        ? `${profile.name} covers ${matchedSkills.length} of ${job.skills.length} required skills for ${job.title}.`
+        : `${profile.name} has adjacent experience, but the required stack needs deeper validation.`,
+  };
+}
+
+function App() {
+  const [view, setView] = useState("home");
+  const [selectedJobId, setSelectedJobId] = useState(jobs[0].id);
+  const [applications, setApplications] = useState([]);
+  const [resumeFile, setResumeFile] = useState(null);
+  const [screening, setScreening] = useState(null);
+  const [chatMessage, setChatMessage] = useState("");
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [isJarvisThinking, setIsJarvisThinking] = useState(false);
+  const [startupStatus, setStartupStatus] = useState("");
+  const [candidateReply, setCandidateReply] = useState("");
+  const [filterJob, setFilterJob] = useState("all");
+  const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+
+  const selectedJob = jobs.find((job) => job.id === selectedJobId) || jobs[0];
+
+  const groupedApplications = useMemo(() => {
+    const filtered =
+      filterJob === "all" ? applications : applications.filter((application) => application.jobId === filterJob);
+    return [...filtered].sort((a, b) => b.combinedScore - a.combinedScore);
+  }, [applications, filterJob]);
+
+  const selectedApplication =
+    applications.find((application) => application.id === selectedApplicationId) || groupedApplications[0];
+
+  const jobCounts = useMemo(
+    () =>
+      jobs.reduce((acc, job) => {
+        acc[job.id] = applications.filter((application) => application.jobId === job.id).length;
+        return acc;
+      }, {}),
+    [applications]
+  );
+
+  const startApplication = async () => {
+    if (!resumeFile) return;
+    setIsParsingResume(true);
+    setChatMessage("");
+    setStartupStatus("Reading resume content and extracting candidate details...");
+
+    try {
+      const parsedResume = await parseResumeProfile(resumeFile);
+      const profile = buildProfileFromResume(parsedResume, selectedJob);
+      setStartupStatus("Connecting to local Ollama JARVIS...");
+      const reply = await callJarvisChat({
+        profile,
+        job: selectedJob,
+        messages: [],
+        questionIndex: 0,
       });
 
-      setResults(updatedResults);
-
-    } catch {
-      alert("Something went wrong!");
+      setScreening({
+        profile,
+        step: 0,
+        answers: [],
+        messages: [
+          { sender: "jarvis", text: reply },
+        ],
+      });
+      setStartupStatus("");
+    } catch (error) {
+      setChatMessage(error.message);
+      setStartupStatus("");
     } finally {
-      setLoading(false);
+      setIsParsingResume(false);
     }
+  };
+
+  const sendCandidateReply = async (event) => {
+    event.preventDefault();
+    if (!screening || !candidateReply.trim() || isJarvisThinking) return;
+
+    const userMessage = { sender: "candidate", text: candidateReply.trim() };
+    const nextMessages = [...screening.messages, userMessage];
+    const nextStep = screening.step + 1;
+    setCandidateReply("");
+    setIsJarvisThinking(true);
+    setScreening({ ...screening, messages: nextMessages, step: nextStep });
+
+    try {
+      const reply = await callJarvisChat({
+        profile: screening.profile,
+        job: selectedJob,
+        messages: nextMessages,
+        questionIndex: nextStep,
+      });
+      const finalMessages = [...nextMessages, { sender: "jarvis", text: reply }];
+
+      if (nextStep >= screeningQuestions.length) {
+        const answers = deriveScreeningAnswers(finalMessages);
+        const application = createApplication(
+          screening.profile,
+          selectedJob,
+          answers,
+          resumeFile?.name || `${screening.profile.name}.pdf`
+        );
+
+        setApplications((current) => [application, ...current]);
+        setSelectedApplicationId(application.id);
+        setScreening({
+          ...screening,
+          step: nextStep,
+          answers,
+          messages: finalMessages,
+          completed: true,
+        });
+        setChatMessage("Application submitted and ranked for the recruiter.");
+      } else {
+        setScreening({ ...screening, step: nextStep, messages: finalMessages });
+      }
+    } catch (error) {
+      setChatMessage(error.message);
+      setScreening({ ...screening, step: nextStep - 1, messages: nextMessages });
+    } finally {
+      setIsJarvisThinking(false);
+    }
+  };
+
+  const resetApplyFlow = () => {
+    setResumeFile(null);
+    setScreening(null);
+    setChatMessage("");
+    setIsParsingResume(false);
+    setIsJarvisThinking(false);
+    setStartupStatus("");
+    setCandidateReply("");
   };
 
   return (
-    <div style={pageStyle}>
-      <header style={headerStyle}>
-        <div>
-          <div style={eyebrow}>AI Recruitment Intelligence</div>
-          <h1 style={title}>Talent Scouting System</h1>
-        </div>
-        <div style={headerBadge}>Candidate Ranking</div>
+    <div className="app-shell">
+      <header className="topbar">
+        <button className="brand" onClick={() => setView("home")}>
+          <span className="brand-mark">TS</span>
+          <span>
+            <strong>Talent Scout 2.0</strong>
+            <small>AI scouting and engagement agent</small>
+          </span>
+        </button>
+        <nav className="nav-actions" aria-label="Dashboard navigation">
+          <button className={view === "candidate" ? "nav-button active" : "nav-button"} onClick={() => setView("candidate")}>
+            Candidate
+          </button>
+          <button className={view === "recruiter" ? "nav-button active" : "nav-button"} onClick={() => setView("recruiter")}>
+            Recruiter
+          </button>
+        </nav>
       </header>
 
-      <main style={mainStyle}>
-        <section style={gridStyle}>
-          <div style={cardStyle}>
-            <div style={sectionHeader}>
-              <div>
-                <h2 style={sectionTitle}>Job Description</h2>
-                <p style={sectionText}>Upload a JD file or paste the role details manually.</p>
-              </div>
-              <span style={stepBadge}>01</span>
+      {view === "home" && (
+        <main className="home-view">
+          <section className="hero-panel">
+            <div className="hero-copy">
+              <p className="eyebrow">AI-Powered Talent Scouting & Engagement Agent</p>
+              <h1>Rank candidates by fit and genuine interest before HR spends an hour chasing replies.</h1>
+              <p>
+                Choose a dashboard to experience the full flow: job discovery, resume upload, JARVIS screening,
+                explainable matching, interest scoring, and recruiter-ready ranking.
+              </p>
             </div>
-
-            <label style={fieldLabel}>JD File</label>
-            <input
-              type="file"
-              onChange={(e) => setJdFile(e.target.files[0])}
-              style={fileInputStyle}
-            />
-
-            <label style={fieldLabel}>Job Description Text</label>
-            <textarea
-              rows="6"
-              placeholder="Paste the job description here..."
-              style={textareaStyle}
-              value={jdText}
-              onChange={(e) => setJdText(e.target.value)}
-            />
-          </div>
-
-          <div style={cardStyle}>
-            <div style={sectionHeader}>
+            <div className="hero-metrics" aria-label="Platform metrics">
               <div>
-                <h2 style={sectionTitle}>Candidate Resumes</h2>
-                <p style={sectionText}>Add resumes and collect candidate responses.</p>
+                <strong>{jobs.length}</strong>
+                <span>IT openings</span>
               </div>
-              <span style={stepBadge}>02</span>
-            </div>
-
-            {resumeInputs.map((r, index) => (
-              <div key={index} style={resumeRow}>
-                <div style={{ flex: 1 }}>
-                  <label style={fieldLabel}>Resume {index + 1}</label>
-                  <input
-                    type="file"
-                    onChange={(e) => handleResumeChange(index, e.target.files[0])}
-                    style={fileInputStyle}
-                  />
-                </div>
-
-                <div style={resumeActions}>
-                  {r.file && (
-                    <button onClick={() => startChat(index)} style={ghostBtn}>
-                      Answer Questions
-                    </button>
-                  )}
-
-                  {resumeInputs.length > 1 && (
-                    <button onClick={() => removeResumeInput(index)} style={removeBtn}>
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            <button style={secondaryBtn} onClick={addResumeInput}>
-              Add Another Resume
-            </button>
-          </div>
-        </section>
-
-        <div style={submitWrap}>
-          <button style={loading ? disabledBtn : primaryBtn} onClick={handleSubmit} disabled={loading}>
-            {loading ? "Processing Candidates..." : "Upload & Rank Candidates"}
-          </button>
-        </div>
-
-        {results && (
-          <section style={resultsSection}>
-            <div style={resultsHeader}>
               <div>
-                <h2 style={resultsTitle}>Ranked Candidates</h2>
-                <p style={sectionText}>Sorted by match quality, interest, and final score.</p>
+                <strong>{applications.length}</strong>
+                <span>Applications</span>
+              </div>
+              <div>
+                <strong>2D</strong>
+                <span>Match + interest</span>
               </div>
             </div>
-
-            {results.map((c, i) => (
-              <div key={i} style={resultCard}>
-                <div style={candidateTop}>
-                  <div>
-                    <div style={rankBadge}>Rank #{i + 1}</div>
-                    <h3 style={candidateName}>{c.name}</h3>
-                  </div>
-                  <div style={finalScoreBox}>
-                    <span style={scoreLabel}>Final Score</span>
-                    <strong style={scoreValue}>{c.final_score}%</strong>
-                  </div>
-                </div>
-
-                <div style={scoreGrid}>
-                  <div style={scoreItem}>
-                    <span>Match Score</span>
-                    <strong>{c.match_score}%</strong>
-                  </div>
-                  <div style={scoreItem}>
-                    <span>Interest Score</span>
-                    <strong>{c.interest_score}%</strong>
-                  </div>
-                  <div style={scoreItem}>
-                    <span>Decision</span>
-                    <strong>{c.decision}</strong>
-                  </div>
-                </div>
-
-                <p style={skillTitle}>Matched Skills</p>
-                <div style={tagContainer}>
-                  {c.matched_skills.map((s, idx) => (
-                    <span key={idx} style={greenTag}>{s}</span>
-                  ))}
-                </div>
-
-                <p style={skillTitle}>Missing Skills</p>
-                <div style={tagContainer}>
-                  {c.missing_skills.map((s, idx) => (
-                    <span key={idx} style={redTag}>{s}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
           </section>
-        )}
-      </main>
 
-      {activeChat !== null && (
-        <div style={modalStyle}>
-          <div style={chatBox}>
-            <div style={chatHeader}>
-              <h3 style={chatTitle}>AI Screening Questions</h3>
-              <span style={chatPill}>Live</span>
+          <section className="role-grid" aria-label="Choose dashboard">
+            <button className="role-card candidate-card" onClick={() => setView("candidate")}>
+              <span className="role-icon">C</span>
+              <span className="role-title">Candidate Dashboard</span>
+              <span className="role-copy">Browse {jobs.length} IT roles, inspect job details, upload a resume, and complete JARVIS screening.</span>
+            </button>
+            <button className="role-card recruiter-card" onClick={() => setView("recruiter")}>
+              <span className="role-icon">R</span>
+              <span className="role-title">Recruiter Dashboard</span>
+              <span className="role-copy">Review applications grouped by job, filter openings, and inspect skill fit with match and interest scores.</span>
+            </button>
+          </section>
+        </main>
+      )}
+
+      {view === "candidate" && (
+        <main className="dashboard-layout">
+          <aside className="job-sidebar">
+            <div className="panel-heading">
+              <p className="eyebrow">Open roles</p>
+              <h2>Candidate Dashboard</h2>
             </div>
-
-            <div style={chatMessages}>
-              {chatHistory.map((msg, i) => (
-                <div
-                  key={i}
-                  style={msg.sender === "ai" ? aiMessage : userMessage}
+            <div className="job-list">
+              {jobs.map((job) => (
+                <button
+                  key={job.id}
+                  className={selectedJobId === job.id ? "job-row selected" : "job-row"}
+                  onClick={() => {
+                    setSelectedJobId(job.id);
+                    resetApplyFlow();
+                  }}
                 >
-                  <strong>{msg.sender === "ai" ? "AI" : "You"}</strong>
-                  <p>{msg.text}</p>
-                </div>
-              ))}
-            </div>
-
-            <div style={chatActions}>
-              {(chatStep === -1 ? ["Yes", "No"] : options[chatStep])?.map((opt, i) => (
-                <button key={i} onClick={() => handleAnswer(opt)} style={chatBtn}>
-                  {opt}
+                  <span>
+                    <strong>{job.title}</strong>
+                    <small>{job.location}</small>
+                  </span>
+                  <em>{jobCounts[job.id] || 0}</em>
                 </button>
               ))}
             </div>
-          </div>
-        </div>
+          </aside>
+
+          <section className="job-detail">
+            <div className="detail-header">
+              <div>
+                <p className="eyebrow">{selectedJob.team}</p>
+                <h1>{selectedJob.title}</h1>
+                <p>{selectedJob.summary}</p>
+              </div>
+              <div className="salary-badge">{selectedJob.salary}</div>
+            </div>
+
+            <div className="job-facts">
+              <span>{selectedJob.location}</span>
+              <span>{selectedJob.type}</span>
+              <span>{selectedJob.level}</span>
+            </div>
+
+            <div className="detail-grid">
+              <section>
+                <h3>Role Details</h3>
+                <p>{selectedJob.description}</p>
+              </section>
+              <section>
+                <h3>Required Skills</h3>
+                <div className="skill-cloud">
+                  {selectedJob.skills.map((skill) => (
+                    <span key={skill}>{skill}</span>
+                  ))}
+                </div>
+              </section>
+              <section>
+                <h3>Good To Have</h3>
+                <div className="skill-cloud soft">
+                  {selectedJob.nice.map((skill) => (
+                    <span key={skill}>{skill}</span>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <section className="apply-panel">
+              <div>
+                <h3>Apply For This Role</h3>
+                <p>Upload PDF, Excel, CSV, or Word resume. JARVIS will extract your profile and begin live AI screening.</p>
+              </div>
+              <div className="upload-row">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.csv,.xls,.xlsx"
+                  onChange={(event) => {
+                    setResumeFile(event.target.files?.[0] || null);
+                    setScreening(null);
+                    setChatMessage("");
+                    setStartupStatus("");
+                  }}
+                />
+                <button className="primary-button" disabled={!resumeFile || isParsingResume} onClick={startApplication}>
+                  {isParsingResume ? "Reading Resume..." : "Apply"}
+                </button>
+              </div>
+              {startupStatus && <p className="parse-note">{startupStatus}</p>}
+              {chatMessage && !screening && <p className="error-note">{chatMessage}</p>}
+            </section>
+
+            {screening && (
+              <section className="chat-panel">
+                <div className="chat-header">
+                  <div>
+                    <p className="eyebrow">Live AI Screening</p>
+                    <h3>JARVIS</h3>
+                  </div>
+                  <span className={screening.completed ? "status-pill done" : "status-pill"}>{screening.completed ? "Complete" : "Live"}</span>
+                </div>
+                <div className="chat-stream">
+                  {screening.messages.map((message, index) => (
+                    <div key={`${message.text}-${index}`} className={message.sender === "jarvis" ? "bubble jarvis" : "bubble candidate"}>
+                      <strong>{message.sender === "jarvis" ? "JARVIS" : screening.profile.name}</strong>
+                      <p>{message.text}</p>
+                    </div>
+                  ))}
+                  {isJarvisThinking && (
+                    <div className="bubble jarvis thinking">
+                      <strong>JARVIS</strong>
+                      <p>Thinking...</p>
+                    </div>
+                  )}
+                </div>
+                {!screening.completed && (
+                  <form className="chat-input-row" onSubmit={sendCandidateReply}>
+                    <input
+                      value={candidateReply}
+                      onChange={(event) => setCandidateReply(event.target.value)}
+                      placeholder="Type your answer to JARVIS..."
+                      disabled={isJarvisThinking}
+                    />
+                    <button type="submit" disabled={!candidateReply.trim() || isJarvisThinking}>
+                      Send
+                    </button>
+                  </form>
+                )}
+                {chatMessage && <p className="success-note">{chatMessage}</p>}
+              </section>
+            )}
+          </section>
+        </main>
+      )}
+
+      {view === "recruiter" && (
+        <main className="recruiter-view">
+          <section className="recruiter-header">
+            <div>
+              <p className="eyebrow">Ranked shortlist</p>
+              <h1>Recruiter Dashboard</h1>
+              <p>Applications are ordered by combined score, with skill evidence and JARVIS interest signals visible at a glance.</p>
+            </div>
+            <select value={filterJob} onChange={(event) => setFilterJob(event.target.value)} aria-label="Filter applications by job">
+              <option value="all">All job applications</option>
+              {jobs.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.title}
+                </option>
+              ))}
+            </select>
+          </section>
+
+          <section className="recruiter-grid">
+            <div className="applications-panel">
+              {groupedApplications.length > 0 ? (
+                groupedApplications.map((application, index) => (
+                  <button
+                    key={application.id}
+                    className={selectedApplication?.id === application.id ? "application-row active" : "application-row"}
+                    onClick={() => setSelectedApplicationId(application.id)}
+                  >
+                    <span className="rank">#{index + 1}</span>
+                    <span className="applicant-main">
+                      <strong>{application.candidateName}</strong>
+                      <small>{application.jobTitle}</small>
+                    </span>
+                    <span className="combined-score">{application.combinedScore}</span>
+                  </button>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <strong>No applications yet</strong>
+                  <p>Candidate applications will appear here after someone applies and completes the JARVIS screening.</p>
+                </div>
+              )}
+            </div>
+
+            {selectedApplication ? (
+              <article className="candidate-insight">
+                <div className="candidate-heading">
+                  <div>
+                    <p className="eyebrow">{selectedApplication.jobTitle}</p>
+                    <h2>{selectedApplication.candidateName}</h2>
+                    <p>{selectedApplication.experience} · {selectedApplication.location} · {selectedApplication.resumeName}</p>
+                  </div>
+                  <div className="score-orb">
+                    <strong>{selectedApplication.combinedScore}</strong>
+                    <span>Rank score</span>
+                  </div>
+                </div>
+
+                <div className="score-cards">
+                  <div>
+                    <span>Match Score</span>
+                    <strong>{selectedApplication.matchScore}%</strong>
+                  </div>
+                  <div>
+                    <span>Interest Score</span>
+                    <strong>{selectedApplication.interestScore}%</strong>
+                  </div>
+                  <div>
+                    <span>Application</span>
+                    <strong>{selectedApplication.appliedAt}</strong>
+                  </div>
+                </div>
+
+                <section className="insight-section">
+                  <h3>Explainability</h3>
+                  <p>{selectedApplication.explanation}</p>
+                </section>
+
+                <section className="insight-section">
+                  <h3>Skills</h3>
+                  <div className="skill-columns">
+                    <div>
+                      <h4>Matched Skills</h4>
+                      <div className="skill-cloud matched">
+                        {selectedApplication.matchedSkills.map((skill) => (
+                          <span key={skill}>{skill}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4>Missing Skills</h4>
+                      <div className="skill-cloud missing">
+                        {selectedApplication.missingSkills.map((skill) => (
+                          <span key={skill}>{skill}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="insight-section">
+                  <h3>JARVIS Screening</h3>
+                  <div className="screening-table">
+                    {screeningQuestions.map((question, index) => (
+                      <div key={question.key}>
+                        <span>{question.question}</span>
+                        <strong>{selectedApplication.answers[index]}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </article>
+            ) : (
+              <article className="candidate-insight empty-detail">
+                <p className="eyebrow">Awaiting applications</p>
+                <h2>Recruiter shortlist is empty</h2>
+                <p>
+                  Once a candidate applies from the Candidate Dashboard, their match score, interest score,
+                  matched skills, missing skills, and JARVIS answers will be ranked here automatically.
+                </p>
+              </article>
+            )}
+          </section>
+        </main>
       )}
     </div>
   );
 }
-
-const pageStyle = {
-  fontFamily: "Inter, Arial, sans-serif",
-  background: "linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%)",
-  minHeight: "100vh",
-  color: "#172033"
-};
-
-const headerStyle = {
-  background: "linear-gradient(135deg, #071629 0%, #123a63 58%, #0f766e 100%)",
-  color: "#fff",
-  padding: "34px 48px",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  boxShadow: "0 20px 50px rgba(7, 22, 41, 0.24)"
-};
-
-const eyebrow = {
-  fontSize: "12px",
-  textTransform: "uppercase",
-  letterSpacing: "1.8px",
-  color: "#9dd8d2",
-  fontWeight: 700,
-  marginBottom: "8px"
-};
-
-const title = {
-  margin: 0,
-  fontSize: "32px",
-  fontWeight: 800
-};
-
-const headerBadge = {
-  background: "rgba(255,255,255,0.12)",
-  border: "1px solid rgba(255,255,255,0.22)",
-  padding: "10px 16px",
-  borderRadius: "999px",
-  fontSize: "13px",
-  fontWeight: 700
-};
-
-const mainStyle = {
-  maxWidth: "1120px",
-  margin: "34px auto",
-  padding: "0 22px"
-};
-
-const gridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: "24px"
-};
-
-const cardStyle = {
-  background: "rgba(255,255,255,0.92)",
-  padding: "26px",
-  borderRadius: "14px",
-  boxShadow: "0 18px 45px rgba(23, 32, 51, 0.08)",
-  border: "1px solid rgba(216, 226, 239, 0.9)"
-};
-
-const sectionHeader = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "18px",
-  marginBottom: "22px"
-};
-
-const sectionTitle = {
-  margin: 0,
-  color: "#172033",
-  fontSize: "21px",
-  fontWeight: 800
-};
-
-const sectionText = {
-  margin: "6px 0 0",
-  color: "#64748b",
-  fontSize: "14px",
-  lineHeight: 1.5
-};
-
-const stepBadge = {
-  width: "38px",
-  height: "38px",
-  borderRadius: "12px",
-  background: "#ecfeff",
-  color: "#0f766e",
-  display: "grid",
-  placeItems: "center",
-  fontWeight: 800
-};
-
-const fieldLabel = {
-  display: "block",
-  fontSize: "13px",
-  fontWeight: 700,
-  color: "#334155",
-  marginBottom: "8px",
-  marginTop: "14px"
-};
-
-const fileInputStyle = {
-  width: "100%",
-  padding: "11px",
-  borderRadius: "10px",
-  border: "1px solid #d8e2ef",
-  background: "#f8fafc",
-  color: "#334155"
-};
-
-const textareaStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "14px",
-  borderRadius: "12px",
-  border: "1px solid #d8e2ef",
-  outline: "none",
-  fontSize: "14px",
-  resize: "vertical",
-  background: "#fbfdff",
-  color: "#172033",
-  lineHeight: 1.6
-};
-
-const resumeRow = {
-  padding: "16px",
-  border: "1px solid #e2e8f0",
-  borderRadius: "12px",
-  marginBottom: "14px",
-  background: "#fbfdff"
-};
-
-const resumeActions = {
-  display: "flex",
-  gap: "10px",
-  marginTop: "12px",
-  flexWrap: "wrap"
-};
-
-const submitWrap = {
-  textAlign: "center",
-  margin: "30px 0 36px"
-};
-
-const primaryBtn = {
-  background: "linear-gradient(135deg, #0f766e, #123a63)",
-  color: "#fff",
-  padding: "14px 32px",
-  border: "none",
-  borderRadius: "12px",
-  fontSize: "15px",
-  fontWeight: 800,
-  cursor: "pointer",
-  boxShadow: "0 14px 30px rgba(15, 118, 110, 0.28)"
-};
-
-const disabledBtn = {
-  ...primaryBtn,
-  opacity: 0.7,
-  cursor: "not-allowed"
-};
-
-const secondaryBtn = {
-  background: "#172033",
-  color: "#fff",
-  padding: "11px 18px",
-  border: "none",
-  borderRadius: "10px",
-  cursor: "pointer",
-  fontWeight: 800,
-  marginTop: "8px"
-};
-
-const ghostBtn = {
-  background: "#ecfeff",
-  color: "#0f766e",
-  border: "1px solid #b6ece8",
-  padding: "9px 13px",
-  borderRadius: "9px",
-  cursor: "pointer",
-  fontWeight: 800
-};
-
-const removeBtn = {
-  background: "#fff1f2",
-  color: "#be123c",
-  border: "1px solid #fecdd3",
-  padding: "9px 13px",
-  borderRadius: "9px",
-  cursor: "pointer",
-  fontWeight: 800
-};
-
-const resultsSection = {
-  marginTop: "20px"
-};
-
-const resultsHeader = {
-  marginBottom: "18px"
-};
-
-const resultsTitle = {
-  margin: 0,
-  fontSize: "26px",
-  color: "#172033"
-};
-
-const resultCard = {
-  background: "#ffffff",
-  padding: "22px",
-  borderRadius: "14px",
-  marginBottom: "18px",
-  boxShadow: "0 16px 42px rgba(23, 32, 51, 0.08)",
-  border: "1px solid #e2e8f0"
-};
-
-const candidateTop = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "18px",
-  alignItems: "flex-start",
-  marginBottom: "18px"
-};
-
-const rankBadge = {
-  color: "#0f766e",
-  fontWeight: 800,
-  fontSize: "13px",
-  marginBottom: "6px"
-};
-
-const candidateName = {
-  margin: 0,
-  fontSize: "22px",
-  color: "#172033"
-};
-
-const finalScoreBox = {
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: "12px",
-  padding: "12px 16px",
-  textAlign: "right",
-  minWidth: "130px"
-};
-
-const scoreLabel = {
-  display: "block",
-  fontSize: "12px",
-  color: "#64748b",
-  fontWeight: 700
-};
-
-const scoreValue = {
-  fontSize: "24px",
-  color: "#0f766e"
-};
-
-const scoreGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-  gap: "12px",
-  marginBottom: "18px"
-};
-
-const scoreItem = {
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: "12px",
-  padding: "13px"
-};
-
-const skillTitle = {
-  margin: "14px 0 8px",
-  fontWeight: 800,
-  color: "#334155"
-};
-
-const tagContainer = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "8px",
-  marginBottom: "10px"
-};
-
-const greenTag = {
-  background: "#ecfdf5",
-  color: "#047857",
-  padding: "7px 11px",
-  borderRadius: "999px",
-  fontSize: "12px",
-  fontWeight: 800,
-  border: "1px solid #bbf7d0"
-};
-
-const redTag = {
-  background: "#fff1f2",
-  color: "#be123c",
-  padding: "7px 11px",
-  borderRadius: "999px",
-  fontSize: "12px",
-  fontWeight: 800,
-  border: "1px solid #fecdd3"
-};
-
-const modalStyle = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(15, 23, 42, 0.68)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  backdropFilter: "blur(8px)",
-  padding: "20px"
-};
-
-const chatBox = {
-  background: "#ffffff",
-  padding: "22px",
-  width: "430px",
-  maxWidth: "100%",
-  maxHeight: "85vh",
-  borderRadius: "16px",
-  boxShadow: "0 30px 80px rgba(0,0,0,0.28)",
-  display: "flex",
-  flexDirection: "column"
-};
-
-const chatHeader = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "16px"
-};
-
-const chatTitle = {
-  margin: 0,
-  fontSize: "20px",
-  color: "#172033"
-};
-
-const chatPill = {
-  background: "#ecfdf5",
-  color: "#047857",
-  padding: "5px 10px",
-  borderRadius: "999px",
-  fontSize: "12px",
-  fontWeight: 800
-};
-
-const chatMessages = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
-  marginBottom: "18px",
-  overflowY: "auto",
-  maxHeight: "52vh",
-  paddingRight: "6px"
-};
-
-const aiMessage = {
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  borderRadius: "12px",
-  padding: "11px 13px",
-  color: "#334155"
-};
-
-const userMessage = {
-  background: "#ecfeff",
-  border: "1px solid #b6ece8",
-  borderRadius: "12px",
-  padding: "11px 13px",
-  color: "#0f766e"
-};
-
-const chatActions = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap"
-};
-
-const chatBtn = {
-  flex: 1,
-  minWidth: "110px",
-  background: "#172033",
-  color: "#fff",
-  border: "none",
-  borderRadius: "10px",
-  padding: "11px 14px",
-  cursor: "pointer",
-  fontWeight: 800
-};
 
 export default App;
