@@ -247,9 +247,9 @@ async def jarvis_chat(request: JarvisChatRequest):
 
         f"Hello {candidate_name}, I am JARVIS, the AI recruitment assistant. Are you genuinely interested in the {request.job_title} role?",
 
-        f"Great {candidate_name}. Do you feel your technical skills and experience align with the {request.job_title} position? Please share a short reason.",
+        f"Do you feel your technical skills and experience align with the {request.job_title} position? Please share a short reason.",
 
-        f"Thank you {candidate_name}. How soon would you be available to join the company?",
+        f"How soon would you be available to join the company?",
 
         f"Thank you {candidate_name}. Your application has been successfully submitted and forwarded to the HR team for further review."
     ]
