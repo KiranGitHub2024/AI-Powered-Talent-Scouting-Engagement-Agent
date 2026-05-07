@@ -16,6 +16,10 @@ from backend.jd_parser.ranking import rank_candidates
 from fastapi.middleware.cors import CORSMiddleware
 
 
+# =========================================================
+# MODELS
+# =========================================================
+
 class JarvisMessage(BaseModel):
     role: str
     content: str
@@ -25,25 +29,43 @@ class JarvisChatRequest(BaseModel):
     candidate_name: str
     candidate_skills: List[str] = []
     candidate_experience: Optional[str] = None
+
     job_title: str
     job_description: str
     required_skills: List[str] = []
+
     question_index: int = 0
     messages: List[JarvisMessage] = []
 
 
+# =========================================================
+# OLLAMA CHAT
+# =========================================================
+
+
 def call_ollama_chat(messages, model=None):
-    ollama_url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/chat")
-    ollama_model = model or os.getenv("OLLAMA_MODEL", "llama3.2")
+    ollama_url = os.getenv(
+        "OLLAMA_URL",
+        "http://127.0.0.1:11434/api/chat"
+    )
+
+    ollama_model = model or os.getenv(
+        "OLLAMA_MODEL",
+        "llama3.2"
+    )
+
     payload = {
         "model": ollama_model,
         "messages": messages,
         "stream": False,
-        "keep_alive": os.getenv("OLLAMA_KEEP_ALIVE", "15m"),
+        "keep_alive": os.getenv(
+            "OLLAMA_KEEP_ALIVE",
+            "15m"
+        ),
         "options": {
-            "temperature": 0.2,
-            "num_ctx": int(os.getenv("OLLAMA_NUM_CTX", "1024")),
-            "num_predict": int(os.getenv("OLLAMA_NUM_PREDICT", "70")),
+            "temperature": 0.1,
+            "num_ctx": 2048,
+            "num_predict": 80,
             "top_p": 0.8,
         },
     }
@@ -51,17 +73,34 @@ def call_ollama_chat(messages, model=None):
     request = urllib.request.Request(
         ollama_url,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json"
+        },
         method="POST",
     )
 
-    with urllib.request.urlopen(request, timeout=180) as response:
-        data = json.loads(response.read().decode("utf-8"))
-        return data.get("message", {}).get("content", "").strip()
+    with urllib.request.urlopen(
+        request,
+        timeout=180
+    ) as response:
+
+        data = json.loads(
+            response.read().decode("utf-8")
+        )
+
+        return (
+            data.get("message", {})
+            .get("content", "")
+            .strip()
+        )
+
+
+# =========================================================
+# FASTAPI
+# =========================================================
 
 app = FastAPI()
 
-# 🔹 CORS FIX
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -71,6 +110,10 @@ app.add_middleware(
 )
 
 
+# =========================================================
+# UPLOAD + RANK
+# =========================================================
+
 @app.post("/upload-and-rank")
 async def upload_and_rank(
     jd_file: Optional[UploadFile] = File(None),
@@ -78,33 +121,63 @@ async def upload_and_rank(
     resume_files: Optional[List[UploadFile]] = File(None),
 ):
     try:
+
         # ---------------- JD ----------------
+
         if jd_file:
             jd_file.file.seek(0)
-            jd_content = extract_text(jd_file.file, jd_file.filename)
+
+            jd_content = extract_text(
+                jd_file.file,
+                jd_file.filename
+            )
+
         elif jd_text:
             jd_content = jd_text
+
         else:
-            return {"error": "Provide jd_file or jd_text"}
+            return {
+                "error": "Provide jd_file or jd_text"
+            }
 
         prompt = build_jd_prompt(jd_content)
+
         raw_output = call_llm(prompt)
-        parsed_jd = parse_llm_output(raw_output, jd_content)
+
+        parsed_jd = parse_llm_output(
+            raw_output,
+            jd_content
+        )
 
         # ---------------- RESUMES ----------------
+
         parsed_resumes = []
 
         if resume_files:
             for file in resume_files:
+
                 file.file.seek(0)
-                text = extract_text(file.file, file.filename)
-                parsed_resumes.append(parse_resume(text))
+
+                text = extract_text(
+                    file.file,
+                    file.filename
+                )
+
+                parsed_resumes.append(
+                    parse_resume(text)
+                )
 
         if not parsed_resumes:
-            return {"error": "Upload at least one resume"}
+            return {
+                "error": "Upload at least one resume"
+            }
 
         # ---------------- RANK ----------------
-        ranked = rank_candidates(parsed_jd, parsed_resumes)
+
+        ranked = rank_candidates(
+            parsed_jd,
+            parsed_resumes
+        )
 
         return {
             "parsed_jd": parsed_jd,
@@ -113,14 +186,29 @@ async def upload_and_rank(
 
     except Exception as e:
         print("API ERROR:", str(e))
-        return {"error": "Internal Server Error"}
 
+        return {
+            "error": "Internal Server Error"
+        }
+
+
+# =========================================================
+# RESUME PROFILE
+# =========================================================
 
 @app.post("/parse-resume-profile")
-async def parse_resume_profile(resume_file: UploadFile = File(...)):
+async def parse_resume_profile(
+    resume_file: UploadFile = File(...)
+):
     try:
+
         resume_file.file.seek(0)
-        text = extract_text(resume_file.file, resume_file.filename)
+
+        text = extract_text(
+            resume_file.file,
+            resume_file.filename
+        )
+
         parsed_resume = parse_resume(text)
 
         return {
@@ -132,64 +220,105 @@ async def parse_resume_profile(resume_file: UploadFile = File(...)):
 
     except Exception as e:
         print("RESUME PARSE ERROR:", str(e))
-        return {"error": "Unable to parse resume"}
 
+        return {
+            "error": "Unable to parse resume"
+        }
+
+
+# =========================================================
+# JARVIS CHAT
+# =========================================================
 
 @app.post("/jarvis-chat")
 async def jarvis_chat(request: JarvisChatRequest):
+
+    candidate_name = (
+        request.candidate_name.strip()
+        if request.candidate_name
+        else "Candidate"
+    )
+
+    # ==========================================
+    # FIXED SCREENING QUESTIONS
+    # ==========================================
+
     questions = [
-        "Ask whether the candidate is genuinely interested in this job.",
-        "Ask whether the candidate feels their skills match this role, and invite one short reason.",
-        "Ask how quickly the candidate can join the company.",
+
+        f"Hello {candidate_name}, I am JARVIS, the AI recruitment assistant. Are you genuinely interested in the {request.job_title} role?",
+
+        f"Great {candidate_name}. Do you feel your technical skills and experience align with the {request.job_title} position? Please share a short reason.",
+
+        f"Thank you {candidate_name}. How soon would you be available to join the company?",
+
+        f"Thank you {candidate_name}. Your application has been successfully submitted and forwarded to the HR team for further review."
     ]
 
-    if request.question_index >= len(questions):
-        current_task = (
-            "End the screening warmly. Say that all details have been sent to HR and that he or she will contact the candidate. "
-            "Do not ask another question."
-        )
-    else:
-        current_task = questions[request.question_index]
+    # ==========================================
+    # SAFE QUESTION INDEX
+    # ==========================================
 
-    system_prompt = f"""
-You are JARVIS, a concise AI screening chatbot.
-Candidate: {request.candidate_name or "Candidate"}; skills: {", ".join(request.candidate_skills[:8]) or "NA"}; experience: {request.candidate_experience or "NA"}.
-Job: {request.job_title}; required skills: {", ".join(request.required_skills)}.
-Task: {current_task}
-Rules: ask one question only, max 45 words, friendly, no scores, no implementation details. First reply must introduce JARVIS.
+    question_index = min(
+        request.question_index,
+        len(questions) - 1
+    )
+
+    # ==========================================
+    # OPTIONAL OLLAMA MEMORY
+    # ==========================================
+
+    system_prompt = """
+You are JARVIS.
+
+You are an AI recruitment screening assistant.
+
+STRICT RULES:
+- Never repeat previous messages
+- Never print instructions
+- Never explain tasks
+- Never repeat candidate answers
+- Never act like ChatGPT
+- Never say 'How can I help you today?'
+- Keep responses short and professional
+- Behave only like a recruiter
+- Ask one question at a time
 """
 
-    ollama_messages = [{"role": "system", "content": system_prompt}]
-    for message in request.messages[-10:]:
-        role = "assistant" if message.role == "jarvis" else "user"
-        ollama_messages.append({"role": role, "content": message.content})
+    ollama_messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        }
+    ]
 
-    if not request.messages:
+    for message in request.messages[-6:]:
+
+        role = (
+            "assistant"
+            if message.role.lower() == "jarvis"
+            else "user"
+        )
+
         ollama_messages.append({
-            "role": "user",
-            "content": (
-                "Start the screening now. Introduce yourself as JARVIS, greet the candidate by name, "
-                "and ask the first screening question about genuine interest in the job. Keep it under 45 words."
-            ),
+            "role": role,
+            "content": message.content
         })
-    else:
-        ollama_messages.append({
-            "role": "user",
-            "content": "Continue the screening by following the current task exactly. Keep it under 45 words.",
-        })
+
+    # ==========================================
+    # RETURN FIXED QUESTION
+    # ==========================================
 
     try:
-        reply = call_ollama_chat(ollama_messages)
-        if not reply:
-            return {"error": "Ollama returned an empty response"}
-        return {"reply": reply}
 
-    except (urllib.error.URLError, TimeoutError) as e:
-        print("OLLAMA CONNECTION ERROR:", str(e))
         return {
-            "error": "Ollama is not running. Start Ollama locally and pull a model such as llama3.2.",
-            "details": str(e),
+            "reply": questions[question_index]
         }
+
     except Exception as e:
-        print("JARVIS OLLAMA ERROR:", str(e))
-        return {"error": "Unable to generate JARVIS response", "details": str(e)}
+
+        print("JARVIS ERROR:", str(e))
+
+        return {
+            "error": "Unable to generate response",
+            "details": str(e)
+        }

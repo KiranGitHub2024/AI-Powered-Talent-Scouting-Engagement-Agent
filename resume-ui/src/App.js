@@ -397,39 +397,83 @@ async function parseResumeProfile(file) {
   };
 }
 
-async function callJarvisChat({ profile, job, messages, questionIndex }) {
+async function callJarvisChat({
+  profile,
+  job,
+  messages,
+  questionIndex,
+}) {
+
   let response;
 
+  const formattedMessages = messages.map(
+    (message) => ({
+      role:
+        message.sender === "jarvis"
+          ? "assistant"
+          : "user",
+
+      content: message.text,
+    })
+  );
+
   try {
-    response = await fetch("http://127.0.0.1:8000/jarvis-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        candidate_name: profile.name,
-        candidate_skills: profile.skills,
-        candidate_experience: profile.experience,
-        job_title: job.title,
-        job_description: job.description,
-        required_skills: job.skills,
-        question_index: questionIndex,
-        messages: messages.map((message) => ({
-          role: message.sender,
-          content: message.text,
-        })),
-      }),
-    });
+
+    response = await fetch(
+      "http://127.0.0.1:8000/jarvis-chat",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          candidate_name:
+            profile.name || "Candidate",
+
+          candidate_skills:
+            profile.skills || [],
+
+          candidate_experience:
+            profile.experience || "",
+
+          job_title: job.title,
+
+          job_description:
+            job.description,
+
+          required_skills:
+            job.skills,
+
+          question_index:
+            questionIndex,
+
+          messages:
+            formattedMessages,
+        }),
+      }
+    );
+
   } catch {
-    throw new Error("Backend is not reachable. Start FastAPI with: uvicorn main:app --reload");
+
+    throw new Error(
+      "Backend is not reachable. Start FastAPI with: uvicorn main:app --reload"
+    );
   }
 
   const data = await response.json();
+
   if (!response.ok || data.error) {
-    throw new Error(data.error || "Unable to connect to JARVIS");
+
+    throw new Error(
+      data.error ||
+      "Unable to connect to JARVIS"
+    );
   }
 
   return data.reply;
 }
-
 function buildProfileFromResume(parsedResume, job) {
   const name = inferNameFromResumeText(parsedResume.resumeText) || cleanNameCandidate(parsedResume.name) || "Candidate";
   const nameScore = [...name].reduce((total, char) => total + char.charCodeAt(0), 0);
@@ -592,56 +636,146 @@ function App() {
     }
   };
 
-  const sendCandidateReply = async (event) => {
-    event.preventDefault();
-    if (!screening || !candidateReply.trim() || isJarvisThinking) return;
+const sendCandidateReply = async (event) => {
 
-    const userMessage = { sender: "candidate", text: candidateReply.trim() };
-    const nextMessages = [...screening.messages, userMessage];
-    const nextStep = screening.step + 1;
-    setCandidateReply("");
-    setIsJarvisThinking(true);
-    setScreening({ ...screening, messages: nextMessages, step: nextStep });
+  event.preventDefault();
 
-    try {
-      const reply = await callJarvisChat({
-        profile: screening.profile,
-        job: selectedJob,
-        messages: nextMessages,
-        questionIndex: nextStep,
-      });
-      const finalMessages = [...nextMessages, { sender: "jarvis", text: reply }];
+  if (
+    !screening ||
+    !candidateReply.trim() ||
+    isJarvisThinking
+  ) {
+    return;
+  }
 
-      if (nextStep >= screeningQuestions.length) {
-        const answers = deriveScreeningAnswers(finalMessages);
-        const application = createApplication(
-          screening.profile,
-          selectedJob,
-          answers,
-          resumeFile?.name || `${screening.profile.name}.pdf`
-        );
+  const trimmedReply =
+    candidateReply.trim();
 
-        setApplications((current) => [application, ...current]);
-        setSelectedApplicationId(application.id);
-        setScreening({
-          ...screening,
-          step: nextStep,
-          answers,
-          messages: finalMessages,
-          completed: true,
-        });
-        setChatMessage("Application submitted and ranked for the recruiter.");
-      } else {
-        setScreening({ ...screening, step: nextStep, messages: finalMessages });
-      }
-    } catch (error) {
-      setChatMessage(error.message);
-      setScreening({ ...screening, step: nextStep - 1, messages: nextMessages });
-    } finally {
-      setIsJarvisThinking(false);
-    }
+  setCandidateReply("");
+
+  setIsJarvisThinking(true);
+
+  const userMessage = {
+    sender: "candidate",
+    text: trimmedReply,
   };
 
+  const updatedMessages = [
+    ...screening.messages,
+    userMessage,
+  ];
+
+  const nextQuestionIndex =
+    screening.step + 1;
+
+  try {
+
+    const reply =
+      await callJarvisChat({
+        profile: screening.profile,
+
+        job: selectedJob,
+
+        messages: updatedMessages,
+
+        questionIndex:
+          nextQuestionIndex,
+      });
+
+    const assistantMessage = {
+      sender: "jarvis",
+      text: reply,
+    };
+
+    const finalMessages = [
+      ...updatedMessages,
+      assistantMessage,
+    ];
+
+    // SCREENING COMPLETE
+
+    if (
+      nextQuestionIndex >=
+      screeningQuestions.length
+    ) {
+
+      const answers =
+        deriveScreeningAnswers(
+          finalMessages
+        );
+
+      const application =
+        createApplication(
+          screening.profile,
+
+          selectedJob,
+
+          answers,
+
+          resumeFile?.name ||
+            `${screening.profile.name}.pdf`
+        );
+
+      setApplications((current) => [
+        application,
+        ...current,
+      ]);
+
+      setSelectedApplicationId(
+        application.id
+      );
+
+      setScreening({
+        profile:
+          screening.profile,
+
+        step:
+          nextQuestionIndex,
+
+        answers,
+
+        messages:
+          finalMessages,
+
+        completed: true,
+      });
+
+      setChatMessage(
+        "Application submitted and ranked for the recruiter."
+      );
+
+    } else {
+
+      // CONTINUE SCREENING
+
+      setScreening({
+        profile:
+          screening.profile,
+
+        step:
+          nextQuestionIndex,
+
+        answers:
+          screening.answers,
+
+        messages:
+          finalMessages,
+
+        completed: false,
+      });
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    setChatMessage(error.message);
+
+  } finally {
+
+    setIsJarvisThinking(false);
+  }
+};
   const resetApplyFlow = () => {
     setResumeFile(null);
     setScreening(null);
